@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LogoMark } from "@/components/logo";
-import { isDemoAuth } from "@/lib/auth/options";
+import { googleAuthProblem, isDemoAuth } from "@/lib/auth/options";
 import { currentUser } from "@/lib/auth/session";
 import { SignInButtons } from "./sign-in-buttons";
 
@@ -10,6 +10,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   if (await currentUser()) redirect("/");
   const { error } = await searchParams;
   const demo = isDemoAuth();
+  const configProblem = demo ? null : googleAuthProblem();
 
   return (
     <main className="relative grid min-h-dvh lg:grid-cols-[1fr_minmax(420px,520px)]">
@@ -59,9 +60,16 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
                 : "تعذر تسجيل الدخول. حاول مرة أخرى."}
             </div>
           ) : null}
-          <div className="mt-8">
-            <SignInButtons demo={demo} />
-          </div>
+          {configProblem ? (
+            <div className="mt-6 rounded-xl border border-[var(--review)]/30 bg-[var(--review-soft)] px-4 py-3 text-sm" role="alert">
+              <p className="font-semibold text-[var(--review)]">تسجيل الدخول غير مُعدّ بعد</p>
+              <p className="mt-1 text-ink-2">{configProblem} عدّل المتغير في Vercel ثم أعد النشر (Redeploy).</p>
+            </div>
+          ) : (
+            <div className="mt-8">
+              <SignInButtons demo={demo} />
+            </div>
+          )}
         </div>
       </section>
     </main>

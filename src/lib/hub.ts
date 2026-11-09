@@ -66,9 +66,10 @@ const state: HubState = ((globalThis as { __qchHub?: HubState }).__qchHub ??= {
 export function getGateway(): SheetGateway {
   if (state.gateway) return state.gateway;
   if (process.env.DATA_SOURCE === "demo") return (state.gateway = new DemoSheetGateway());
-  const id = process.env.SPREADSHEET_ID;
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_PRIVATE_KEY;
+  const clean = (v: string | undefined) => (v ?? "").trim().replace(/^["']|["']$/g, "").trim();
+  const id = clean(process.env.SPREADSHEET_ID);
+  const email = clean(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+  const key = clean(process.env.GOOGLE_PRIVATE_KEY);
   if (!id || !email || !key) {
     throw new HubError(
       500,

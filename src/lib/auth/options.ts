@@ -4,6 +4,22 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { roleForEmail, type Role } from "./roles";
 
+/** Env values pasted into dashboards often carry stray spaces, newlines or quotes. */
+export const cleanEnv = (v: string | undefined) => (v ?? "").trim().replace(/^["']|["']$/g, "").trim();
+
+/** Why Google sign-in cannot work with the current settings, or null when it can. */
+export function googleAuthProblem(): string | null {
+  const id = cleanEnv(process.env.GOOGLE_CLIENT_ID);
+  const secret = cleanEnv(process.env.GOOGLE_CLIENT_SECRET);
+  if (!id) return "GOOGLE_CLIENT_ID غير مضبوط في إعدادات الخادم.";
+  if (/REPLACE|\s/.test(id) || !id.endsWith(".apps.googleusercontent.com")) {
+    return "قيمة GOOGLE_CLIENT_ID غير صحيحة؛ يجب أن تنتهي بـ .apps.googleusercontent.com.";
+  }
+  if (!secret || /REPLACE/.test(secret)) return "GOOGLE_CLIENT_SECRET غير مضبوط في إعدادات الخادم.";
+  if (!cleanEnv(process.env.NEXTAUTH_SECRET)) return "NEXTAUTH_SECRET غير مضبوط في إعدادات الخادم.";
+  return null;
+}
+
 export const isDemoAuth = () =>
   process.env.AUTH_MODE === "demo" &&
   (process.env.NODE_ENV !== "production" || process.env.ALLOW_DEMO_AUTH_IN_PRODUCTION === "true");
@@ -33,8 +49,8 @@ export const authOptions: NextAuthOptions = {
       ]
     : [
         GoogleProvider({
-          clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+          clientId: cleanEnv(process.env.GOOGLE_CLIENT_ID),
+          clientSecret: cleanEnv(process.env.GOOGLE_CLIENT_SECRET),
           authorization: { params: { prompt: "select_account" } },
         }),
       ],
